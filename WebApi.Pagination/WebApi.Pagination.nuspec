@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+	<metadata>
+		<id>WebApi.Pagination</id>
+		<version>$version$</version>
+		<authors>Bastian Eicher</authors>
+		<copyright>1&amp;1 Internet SE</copyright>
+		<projectUrl>https://github.com/1and1/WebApi.Pagination</projectUrl>
+		<description>WebApi.Pagination allows you to easily add Range Header-based pagination to existing WebAPI endpoints that operate on IQueryable data sources.</description>
+		<summary>Add Range Header-based pagination to existing WebAPI endpoints</summary>
+		<tags>WebAPI Pagination Range HTTP Header Long Polling</tags>
+	</metadata>
+</package>
