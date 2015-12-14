@@ -23,27 +23,27 @@ namespace WebApi.Pagination.Sample.Controllers
         /// Normal response with no pagination.
         /// </summary>
         [HttpGet, Route("normal"), ResponseType(typeof(IEnumerable<Person>))]
-        public HttpResponseMessage Normal(HttpRequestMessage request)
+        public HttpResponseMessage Normal()
         {
-            return request.CreateResponse(Persons);
+            return Request.CreateResponse(Persons);
         }
 
         /// <summary>
         /// Response with pagination.
         /// </summary>
         [HttpGet, Route("pagination"), ResponseType(typeof(IEnumerable<Person>))]
-        public HttpResponseMessage Pagination(HttpRequestMessage request)
+        public HttpResponseMessage Pagination()
         {
-            return request.CreateResponsePagination(Persons);
+            return Request.CreateResponsePagination(Persons);
         }
 
         /// <summary>
         /// Response with pagination and long-polling for open ended ranges.
         /// </summary>
         [HttpGet, Route("long-polling"), ResponseType(typeof(IEnumerable<Person>))]
-        public Task<HttpResponseMessage> LongPolling(HttpRequestMessage request)
+        public Task<HttpResponseMessage> LongPolling()
         {
-            return request.CreateResponsePaginationLongPollingAsync(Persons);
+            return Request.CreateResponsePaginationLongPollingAsync(Persons);
         }
     }
 }
