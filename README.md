@@ -9,7 +9,9 @@ NuGet package:
 ## Getting started
 
 1. Add the NuGet package to your project.
-2. Use the `.CreateResponsePagination()` extension method for `HttpResponseMessage` to build a paginated response from an `IQueryable` source.
+2. Choose one:
+  * Add the `[Pagination]` attribute to endpoint methods.
+  * Use the `.CreateResponsePagination()` extension method for `HttpResponseMessage` to build a paginated response from an `IQueryable` source.
 
 
 ## Sample project
