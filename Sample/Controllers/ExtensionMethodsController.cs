@@ -11,7 +11,7 @@ namespace WebApi.Pagination.Sample.Controllers
     /// <summary>
     /// Demonstrates the usage of the <see cref="HttpPagination"/> extension methods.
     /// </summary>
-    [RoutePrefix("api/extension-methods")]
+    [RoutePrefix("extension-methods")]
     public class ExtensionMethodsController : ApiController
     {
         // This is a stand-in for a real queryable data source, such as a database

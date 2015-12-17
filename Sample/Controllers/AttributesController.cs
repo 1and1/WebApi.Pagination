@@ -8,7 +8,7 @@ namespace WebApi.Pagination.Sample.Controllers
     /// <summary>
     /// Demonstrates the usage of the <see cref="PaginationAttribute"/>.
     /// </summary>
-    [RoutePrefix("api/attributes")]
+    [RoutePrefix("attributes")]
     public class AttributesController : ApiController
     {
         // This is a stand-in for a real queryable data source, such as a database
@@ -28,7 +28,8 @@ namespace WebApi.Pagination.Sample.Controllers
         /// <summary>
         /// Response with pagination.
         /// </summary>
-        [HttpGet, Route("pagination"), Pagination]
+        [HttpGet, Route("pagination")]
+        [Pagination]
         public IQueryable<Person> Pagination()
         {
             return Persons;
@@ -37,7 +38,8 @@ namespace WebApi.Pagination.Sample.Controllers
         /// <summary>
         /// Response with pagination and long-polling for open ended ranges.
         /// </summary>
-        [HttpGet, Route("long-polling"), PaginationLongPolling]
+        [HttpGet, Route("long-polling")]
+        [PaginationLongPolling]
         public IQueryable<Person> LongPolling()
         {
             return Persons;
