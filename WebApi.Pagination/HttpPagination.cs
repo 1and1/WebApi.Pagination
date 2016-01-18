@@ -60,7 +60,7 @@ namespace WebApi.Pagination
 
         /// <summary>
         /// Generates a response message from a queryable data source and applies any pagination requests specified in the request message.
-        /// Uses long polling for open ended ranges that initally return empty result sets.
+        /// Uses long polling for open-ended ranges.
         /// </summary>
         /// <param name="request">The request message to check for pagination requests.</param>
         /// <param name="source">The queryable data source to apply pagination and long polling to and return in response message.</param>
@@ -95,7 +95,7 @@ namespace WebApi.Pagination
 
         /// <summary>
         /// Generates a response message from a queryable data source and applies any pagination requests specified in the request message.
-        /// Uses long polling for open ended ranges that initally return empty result sets.
+        /// Uses long polling for open-ended ranges.
         /// </summary>
         /// <param name="request">The request message to check for pagination requests.</param>
         /// <param name="source">The queryable data source to apply pagination and long polling to and return in response message.</param>

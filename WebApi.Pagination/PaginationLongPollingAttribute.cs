@@ -7,7 +7,7 @@ namespace WebApi.Pagination
 {
     /// <summary>
     /// Apply any pagination requests specified in HTTP requests to <see cref="IQueryable{T}"/> responses.
-    /// Use long polling for open ended ranges that initally return empty result sets.
+    /// Use long polling for open-ended ranges.
     /// </summary>
     public class PaginationLongPollingAttribute : PaginationAttribute
     {
