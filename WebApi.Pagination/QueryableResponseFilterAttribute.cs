@@ -44,14 +44,14 @@ namespace WebApi.Pagination
         private static Type GetQueryableInterface(Type type)
         {
             var queryableInterface = type.GetInterfaces()
-                .FirstOrDefault(x => x.GetGenericTypeDefinition() == typeof (IQueryable<>));
+                .FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IQueryable<>));
             if (queryableInterface == null)
                 throw new InvalidOperationException(type.Name + " does not implement IQueryable<T>.");
             return queryableInterface;
         }
 
         private static readonly MethodInfo HelperMethodInfo =
-            typeof (QueryableResponseFilterAttribute).GetMethod("HelperAsync",
+            typeof(QueryableResponseFilterAttribute).GetMethod("HelperAsync",
                 BindingFlags.Instance | BindingFlags.NonPublic);
 
         // ReSharper disable once UnusedMember.Local, invoked via reflection
