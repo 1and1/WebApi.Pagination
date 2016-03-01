@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("1&1 Internet SE")]
-[assembly: AssemblyProduct("WebApi.Pagination")]
 [assembly: AssemblyCopyright("Copyright © 1und1 Internet SE")]
+[assembly: AssemblyProduct("WebApi.Pagination")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: AssemblyVersion("0.4.0.0")]
