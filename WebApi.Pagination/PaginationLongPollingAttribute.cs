@@ -12,7 +12,7 @@ namespace WebApi.Pagination
     public class PaginationLongPollingAttribute : PaginationAttribute
     {
         /// <summary>
-        /// How many query attempts are performed for a long poll before giving up.
+        /// How many database query attempts are performed for a single long poll before terminating the connection and requiring the client to reconnect.
         /// </summary>
         public int MaxAttempts { get; set; }
 
