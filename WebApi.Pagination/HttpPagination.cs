@@ -20,32 +20,78 @@ namespace WebApi.Pagination
         public const string DefaultUnit = "elements";
 
         /// <summary>
-        /// Generates a response message from a queryable data source and applies any pagination requests specified in the request message.
+        /// Generates a response message from a source data source and applies any pagination requests specified in the request message.
         /// </summary>
         /// <param name="request">The request message to check for pagination requests.</param>
-        /// <param name="source">The queryable data source to apply pagination to and return in response message.</param>
+        /// <param name="source">The source data source to apply pagination to and return in response message.</param>
         /// <param name="unit">The value used for <see cref="RangeHeaderValue.Unit"/>.</param>
+        /// <param name="maxCount">The max count of requested unit units.</param>
         public static HttpResponseMessage CreateResponsePagination<T>(this HttpRequestMessage request,
-            IQueryable<T> source, string unit = DefaultUnit)
+            IQueryable<T> source, string unit = DefaultUnit, long? maxCount = null)
         {
             if (request.Headers.Range == null || request.Headers.Range.Unit != unit)
                 return request.CreateResponseAdvertised(source.ToList(), unit);
-            var range = request.Headers.Range.Ranges.First();
+            RangeItemHeaderValue range = request.Headers.Range.Ranges.First();
+            HttpResponseMessage responsePagination;
+            if (CheckRequestedRange<T>(request, maxCount, range, out responsePagination)) return responsePagination;
 
             IQueryable<T> paginatedData;
             long firstIndex;
             try
             {
-                paginatedData = source.Paginate(range, out firstIndex);
+                paginatedData = ApplyPagination(request, source, out firstIndex, unit);
             }
             catch (ArgumentException ex)
             {
                 return request.CreateErrorResponse(HttpStatusCode.BadRequest, ex);
             }
+            return GetPaginatedHttpResponseMessage<T>(request, paginatedData, firstIndex, unit);
+        }
 
-            var elements = paginatedData.ToList();
-            long totalLength = source.LongCount();
-            return request.CreateResponsePagination(elements, firstIndex, totalLength, unit);
+        private static bool CheckRequestedRange<T>(HttpRequestMessage request, long? maxCount,
+            RangeItemHeaderValue range,
+            out HttpResponseMessage responsePagination)
+        {
+            responsePagination = null;
+            if (maxCount.HasValue && range.To.HasValue && range.From.HasValue &&
+                Math.Abs(range.To.Value - range.From.Value) > maxCount)
+            {
+                {
+                    responsePagination = request.CreateErrorResponse(HttpStatusCode.RequestEntityTooLarge,
+                        string.Format("Requested range is out of range (max range: {0}.", maxCount));
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Applies the requested Pagerequest on the <paramref name="source"/> object.
+        /// </summary>
+        /// <param name = "request" > The request message to check for pagination requests.</param>
+        /// <param name="source">The source data source to apply pagination.</param>
+        /// <param name="firstIndex">The start index extracted from the request header.</param>
+        /// <param name="unit">The value used for <see cref="RangeHeaderValue.Unit"/>.</param>
+        /// <returns>The paginated source.</returns>
+        public static IQueryable<T> ApplyPagination<T>(this HttpRequestMessage request,
+            IQueryable<T> source, out long firstIndex, string unit = DefaultUnit)
+        {
+            return source.Paginate(request.Headers.Range.Ranges.First(), out firstIndex);
+        }
+
+        /// <summary>
+        /// Wraps the query result of <paramref name="source"/> into a fitting <see cref="HttpRequestMessage"/>.
+        /// </summary>
+        /// <param name="request">The request to create the response for.</param>
+        /// <param name="source">The source data source to apply pagination to and return in response message.</param>
+        /// <param name="firstIndex">The start index extracted from the request header.</param>
+        /// <param name="unit">The value used for <see cref="RangeHeaderValue.Unit"/>.</param>
+        /// <param name="maxCount">The max count of requested unit units.</param>
+        /// <returns>The pagination http response.</returns>
+        public static HttpResponseMessage GetPaginatedHttpResponseMessage<T>(this HttpRequestMessage request,
+            IQueryable<T> source, long firstIndex, string unit = DefaultUnit, long? maxCount = null)
+        {
+            return request.CreateResponsePagination(source.ToList(), firstIndex, source.LongCount(), unit);
         }
 
         /// <summary>
@@ -59,21 +105,25 @@ namespace WebApi.Pagination
         public const int DefaultDelayMs = 1500;
 
         /// <summary>
-        /// Generates a response message from a queryable data source and applies any pagination requests specified in the request message.
+        /// Generates a response message from a source data source and applies any pagination requests specified in the request message.
         /// Uses long polling for open-ended ranges.
         /// </summary>
         /// <param name="request">The request message to check for pagination requests.</param>
-        /// <param name="source">The queryable data source to apply pagination and long polling to and return in response message.</param>
+        /// <param name="source">The source data source to apply pagination and long polling to and return in response message.</param>
         /// <param name="maxAttempts">How many query attempts are performed for a long poll before giving up.</param>
         /// <param name="delayMs">How many milliseconds to wait between query attempts for a long poll.</param>
+        /// <param name="maxCount">The max count of requested unit units.</param>
         /// <param name="unit">The value used for <see cref="RangeHeaderValue.Unit"/>.</param>
         public static HttpResponseMessage CreateResponsePaginationLongPolling<T>(this HttpRequestMessage request,
             IQueryable<T> source, int maxAttempts = DefaultMaxAttempts, int delayMs = DefaultDelayMs,
-            string unit = DefaultUnit)
+            string unit = DefaultUnit, long? maxCount = null)
         {
             if (request.Headers.Range == null || request.Headers.Range.Unit != unit)
                 return request.CreateResponseAdvertised(source.ToList(), unit);
+
             var range = request.Headers.Range.Ranges.First();
+            HttpResponseMessage responsePagination;
+            if (CheckRequestedRange<T>(request, maxCount, range, out responsePagination)) return responsePagination;
 
             IQueryable<T> paginatedData;
             long firstIndex;
@@ -94,24 +144,28 @@ namespace WebApi.Pagination
         }
 
         /// <summary>
-        /// Generates a response message from a queryable data source and applies any pagination requests specified in the request message.
+        /// Generates a response message from a source data source and applies any pagination requests specified in the request message.
         /// Uses long polling for open-ended ranges.
         /// </summary>
         /// <param name="request">The request message to check for pagination requests.</param>
-        /// <param name="source">The queryable data source to apply pagination and long polling to and return in response message.</param>
+        /// <param name="source">The source data source to apply pagination and long polling to and return in response message.</param>
         /// <param name="maxAttempts">How many query attempts are performed for a long poll before giving up.</param>
         /// <param name="delayMs">How many milliseconds to wait between query attempts for a long poll.</param>
         /// <param name="unit">The value used for <see cref="RangeHeaderValue.Unit"/>.</param>
+        /// <param name="maxCount">The max count of requested unit units.</param>
         /// <param name="cancellationToken">Used to cancel the polling.</param>
         public static async Task<HttpResponseMessage> CreateResponsePaginationLongPollingAsync<T>(
             this HttpRequestMessage request,
             IQueryable<T> source, int maxAttempts = DefaultMaxAttempts, int delayMs = DefaultDelayMs,
             string unit = DefaultUnit,
+            long? maxCount = null,
             CancellationToken cancellationToken = default(CancellationToken))
         {
             if (request.Headers.Range == null || request.Headers.Range.Unit != unit)
                 return request.CreateResponseAdvertised(source.ToList(), unit);
             var range = request.Headers.Range.Ranges.First();
+            HttpResponseMessage responsePagination;
+            if (CheckRequestedRange<T>(request, maxCount, range, out responsePagination)) return responsePagination;
 
             IQueryable<T> paginatedData;
             long firstIndex;
@@ -151,7 +205,8 @@ namespace WebApi.Pagination
             var response = request.CreateResponse(HttpStatusCode.PartialContent, elements);
             response.Headers.AcceptRanges.Add(unit);
             response.Content.Headers.ContentRange = new ContentRangeHeaderValue(
-                firstIndex, firstIndex + elements.Count - 1, totalLength) {Unit = unit};
+                firstIndex, firstIndex + elements.Count - 1, totalLength)
+            {Unit = unit};
             return response;
         }
 
@@ -174,7 +229,8 @@ namespace WebApi.Pagination
             var response = request.CreateResponse(HttpStatusCode.PartialContent, elements);
             response.Headers.AcceptRanges.Add(unit);
             response.Content.Headers.ContentRange = new ContentRangeHeaderValue(
-                firstIndex, firstIndex + elements.Count - 1) {Unit = unit};
+                 firstIndex, firstIndex + elements.Count - 1)
+            { Unit = unit};
             return response;
         }
 

@@ -16,9 +16,18 @@ namespace WebApi.Pagination
         /// </summary>
         public string Unit { get; set; }
 
+        public long? MaxCount { get; set; }
+
         public PaginationAttribute()
         {
             Unit = HttpPagination.DefaultUnit;
+            MaxCount = null;
+        }
+
+        public PaginationAttribute(long maxCount)
+        {
+            Unit = HttpPagination.DefaultUnit;
+            MaxCount = maxCount;
         }
 
         protected override Task<HttpResponseMessage> BuildResponseMessageAsync<T>(HttpRequestMessage request,
