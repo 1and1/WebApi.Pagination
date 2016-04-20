@@ -36,6 +36,16 @@ namespace WebApi.Pagination.Sample.Controllers
         }
 
         /// <summary>
+        /// Response with pagination with a limited result set size.
+        /// </summary>
+        [HttpGet, Route("pagination-limited")]
+        [Pagination(MaxCount = 1)]
+        public IQueryable<Person> PaginationLimited()
+        {
+            return Persons;
+        }
+
+        /// <summary>
         /// Response with pagination and long-polling for open ended ranges.
         /// </summary>
         [HttpGet, Route("long-polling")]

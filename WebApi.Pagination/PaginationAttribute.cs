@@ -16,6 +16,11 @@ namespace WebApi.Pagination
         /// </summary>
         public string Unit { get; set; }
 
+        /// <summary>
+        /// The maximum number of elements that clients may retrieve in a single request. <c>0</c> for no limit.
+        /// </summary>
+        public long MaxCount { get; set; }
+
         public PaginationAttribute()
         {
             Unit = HttpPagination.DefaultUnit;
@@ -24,7 +29,7 @@ namespace WebApi.Pagination
         protected override Task<HttpResponseMessage> BuildResponseMessageAsync<T>(HttpRequestMessage request,
             IQueryable<T> content, CancellationToken cancellationToken)
         {
-            return Task.FromResult(request.CreateResponsePagination(content, Unit));
+            return Task.FromResult(request.CreateResponsePagination(content, Unit, MaxCount));
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net.Http;
 using System.Net.Http.Headers;
 
 namespace WebApi.Pagination
@@ -9,6 +10,19 @@ namespace WebApi.Pagination
     /// </summary>
     public static class Pagination
     {
+        /// <summary>
+        /// Applies pagination to a queryable data source.
+        /// </summary>
+        /// <param name="source">The data source to get elements from.</param>
+        /// <param name="request">The request message to check for pagination requests to apply to the <paramref name="source"/>.</param>
+        /// <param name="firstIndex">Returns the index of the first element selected by the range request.</param>
+        /// <exception cref="InvalidOperationException"><paramref name="request"/> contains no pagination requests.</exception>
+        /// <exception cref="ArgumentException"><paramref name="request"/> specifies neither <see cref="RangeItemHeaderValue.From"/> nor <see cref="RangeItemHeaderValue.To"/>.</exception>
+        public static IQueryable<T> Paginate<T>(this IQueryable<T> source, HttpRequestMessage request, out long firstIndex)
+        {
+            return source.Paginate(request.Headers.Range.Ranges.First(), out firstIndex);
+        }
+
         /// <summary>
         /// Applies pagination to a queryable data source.
         /// </summary>
