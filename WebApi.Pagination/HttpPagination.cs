@@ -229,7 +229,8 @@ namespace WebApi.Pagination
             var response = request.CreateResponse(HttpStatusCode.PartialContent, elements);
             response.Headers.AcceptRanges.Add(unit);
             response.Content.Headers.ContentRange = new ContentRangeHeaderValue(
-            {Unit = unit};
+                 firstIndex, firstIndex + elements.Count - 1)
+            { Unit = unit};
             return response;
         }
 
