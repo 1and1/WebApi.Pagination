@@ -1,6 +1,6 @@
 ﻿using System.Web.Http;
 
-namespace WebApi.Pagination.Sample
+namespace PaginationSample
 {
     public class WebApiApplication : System.Web.HttpApplication
     {

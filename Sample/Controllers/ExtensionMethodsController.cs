@@ -4,9 +4,10 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Http;
 using System.Web.Http.Description;
-using WebApi.Pagination.Sample.Models;
+using PaginationSample.Models;
+using WebApi.Pagination;
 
-namespace WebApi.Pagination.Sample.Controllers
+namespace PaginationSample.Controllers
 {
     /// <summary>
     /// Demonstrates the usage of the <see cref="HttpPagination"/> extension methods.

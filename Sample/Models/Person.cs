@@ -1,4 +1,4 @@
-﻿namespace WebApi.Pagination.Sample.Models
+﻿namespace PaginationSample.Models
 {
     public class Person
     {

@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Web.Http;
-using WebApi.Pagination.Sample.Models;
+using PaginationSample.Models;
+using WebApi.Pagination;
 
-namespace WebApi.Pagination.Sample.Controllers
+namespace PaginationSample.Controllers
 {
     /// <summary>
     /// Demonstrates the usage of the <see cref="PaginationAttribute"/>.
