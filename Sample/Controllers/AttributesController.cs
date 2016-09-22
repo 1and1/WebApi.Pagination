@@ -21,39 +21,27 @@ namespace PaginationSample.Controllers
         /// Normal response with no pagination.
         /// </summary>
         [HttpGet, Route("normal")]
-        public IEnumerable<Person> Normal()
-        {
-            return Persons;
-        }
+        public IEnumerable<Person> Normal() => Persons;
 
         /// <summary>
         /// Response with pagination.
         /// </summary>
         [HttpGet, Route("pagination")]
         [Pagination]
-        public IQueryable<Person> Pagination()
-        {
-            return Persons;
-        }
+        public IQueryable<Person> Pagination() => Persons;
 
         /// <summary>
         /// Response with pagination with a limited result set size.
         /// </summary>
         [HttpGet, Route("pagination-limited")]
         [Pagination(MaxCount = 1)]
-        public IQueryable<Person> PaginationLimited()
-        {
-            return Persons;
-        }
+        public IQueryable<Person> PaginationLimited() => Persons;
 
         /// <summary>
         /// Response with pagination and long-polling for open ended ranges.
         /// </summary>
         [HttpGet, Route("long-polling")]
         [PaginationLongPolling]
-        public IQueryable<Person> LongPolling()
-        {
-            return Persons;
-        }
+        public IQueryable<Person> LongPolling() => Persons;
     }
 }

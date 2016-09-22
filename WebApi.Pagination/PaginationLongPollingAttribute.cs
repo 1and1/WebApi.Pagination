@@ -27,11 +27,7 @@ namespace WebApi.Pagination
             DelayMs = HttpPagination.DefaultDelayMs;
         }
 
-        protected override Task<HttpResponseMessage> BuildResponseMessageAsync<T>(HttpRequestMessage request,
-            IQueryable<T> source, CancellationToken cancellationToken)
-        {
-            return request.CreateResponsePaginationLongPollingAsync(source, MaxAttempts, DelayMs, Unit,
-                cancellationToken);
-        }
+        protected override Task<HttpResponseMessage> BuildResponseMessageAsync<T>(HttpRequestMessage request, IQueryable<T> source, CancellationToken cancellationToken) =>
+            request.CreateResponsePaginationLongPollingAsync(source, MaxAttempts, DelayMs, Unit, cancellationToken);
     }
 }

@@ -114,19 +114,11 @@ namespace WebApi.Pagination
         {
             if (maxCount == 0) return;
             if (!range.To.HasValue)
-            {
-                throw new ArgumentException(string.Format(
-                    "The request is attempting to retrieve an open-ended set of elements. However, a single request may not retrieve more than {0} elements.",
-                    maxCount));
-            }
+                throw new ArgumentException($"The request is attempting to retrieve an open-ended set of elements. However, a single request may not retrieve more than {maxCount} elements.");
 
             long count = (range.To - range.From + 1) ?? range.To.Value;
             if (count > maxCount)
-            {
-                throw new ArgumentException(string.Format(
-                    "The request is attempting to retrieve {0} elements. However, a single request may not retrieve more than {1} elements.",
-                    count, maxCount));
-            }
+                throw new ArgumentException($"The request is attempting to retrieve {count} elements. However, a single request may not retrieve more than {maxCount} elements.");
         }
 
         /// <summary>
@@ -174,11 +166,8 @@ namespace WebApi.Pagination
         /// <param name="source">The queryable data source with applied pagination.</param>
         /// <param name="firstIndex">The index of the first element in <paramref name="source"/>.</param>
         /// <param name="unit">The value used for <see cref="RangeHeaderValue.Unit"/>.</param>
-        public static HttpResponseMessage BuildResponsePagination<T>(HttpRequestMessage request,
-            IQueryable<T> source, long firstIndex, string unit = DefaultUnit)
-        {
-            return BuildResponsePagination(request, source.ToList(), firstIndex, source.LongCount(), unit);
-        }
+        public static HttpResponseMessage BuildResponsePagination<T>(HttpRequestMessage request, IQueryable<T> source, long firstIndex, string unit = DefaultUnit) =>
+            BuildResponsePagination(request, source.ToList(), firstIndex, source.LongCount(), unit);
 
         /// <summary>
         /// Builds a response message for a paginated set of elements.

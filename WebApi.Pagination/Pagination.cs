@@ -18,10 +18,8 @@ namespace WebApi.Pagination
         /// <param name="firstIndex">Returns the index of the first element selected by the range request.</param>
         /// <exception cref="InvalidOperationException"><paramref name="request"/> contains no pagination requests.</exception>
         /// <exception cref="ArgumentException"><paramref name="request"/> specifies neither <see cref="RangeItemHeaderValue.From"/> nor <see cref="RangeItemHeaderValue.To"/>.</exception>
-        public static IQueryable<T> Paginate<T>(this IQueryable<T> source, HttpRequestMessage request, out long firstIndex)
-        {
-            return source.Paginate(request.Headers.Range.Ranges.First(), out firstIndex);
-        }
+        public static IQueryable<T> Paginate<T>(this IQueryable<T> source, HttpRequestMessage request, out long firstIndex) =>
+            source.Paginate(request.Headers.Range.Ranges.First(), out firstIndex);
 
         /// <summary>
         /// Applies pagination to a queryable data source.
@@ -50,20 +48,16 @@ namespace WebApi.Pagination
         /// <param name="source">The data source.</param>
         /// <param name="from">The index of the first element to retrieve (inclusive).</param>
         /// <param name="to">The index of the last element to retrieve (inclusive).</param>
-        private static IQueryable<T> Subset<T>(this IQueryable<T> source, long from, long to)
-        {
-            return source.Skip((int)from).Take((int)(to - from + 1));
-        }
+        private static IQueryable<T> Subset<T>(this IQueryable<T> source, long from, long to) =>
+            source.Skip((int)from).Take((int)(to - from + 1));
 
         /// <summary>
         /// Retrieves all elements in a queryable data source skipping a specific number of elements at the start. Performs long polling if the result set is empty.
         /// </summary>
         /// <param name="source">The data source.</param>
         /// <param name="from">The index of the first element to retrieve (inclusive).</param>
-        private static IQueryable<T> Skip<T>(this IQueryable<T> source, long from)
-        {
-            return Queryable.Skip(source, (int)from);
-        }
+        private static IQueryable<T> Skip<T>(this IQueryable<T> source, long from) =>
+            Queryable.Skip(source, (int)from);
 
         /// <summary>
         /// Retrieves the last n elements in a queryable data source.

@@ -18,10 +18,7 @@ namespace WebApi.Pagination
         {
             var objectContent = actionExecutedContext.Response.Content as ObjectContent;
             if (objectContent != null)
-            {
-                actionExecutedContext.Response = await BuildResponseMessageAsync(
-                    actionExecutedContext.Request, objectContent.Value, cancellationToken);
-            }
+                actionExecutedContext.Response = await BuildResponseMessageAsync(actionExecutedContext.Request, objectContent.Value, cancellationToken);
 
             await base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
         }
@@ -55,11 +52,8 @@ namespace WebApi.Pagination
                 BindingFlags.Instance | BindingFlags.NonPublic);
 
         // ReSharper disable once UnusedMember.Local, invoked via reflection
-        private Task<HttpResponseMessage> HelperAsync<T>(HttpRequestMessage request,
-            IQueryable<T> content, CancellationToken cancellationToken)
-        {
-            return BuildResponseMessageAsync(request, content, cancellationToken);
-        }
+        private Task<HttpResponseMessage> HelperAsync<T>(HttpRequestMessage request, IQueryable<T> content, CancellationToken cancellationToken) =>
+            BuildResponseMessageAsync(request, content, cancellationToken);
         #endregion
 
         /// <summary>
@@ -68,7 +62,6 @@ namespace WebApi.Pagination
         /// <param name="request">The request to create the response for.</param>
         /// <param name="content">The content to return in response message.</param>
         /// <param name="cancellationToken">Used to cancel building the response.</param>
-        protected abstract Task<HttpResponseMessage> BuildResponseMessageAsync<T>(HttpRequestMessage request,
-            IQueryable<T> content, CancellationToken cancellationToken);
+        protected abstract Task<HttpResponseMessage> BuildResponseMessageAsync<T>(HttpRequestMessage request, IQueryable<T> content, CancellationToken cancellationToken);
     }
 }

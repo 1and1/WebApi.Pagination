@@ -26,10 +26,7 @@ namespace WebApi.Pagination
             Unit = HttpPagination.DefaultUnit;
         }
 
-        protected override Task<HttpResponseMessage> BuildResponseMessageAsync<T>(HttpRequestMessage request,
-            IQueryable<T> content, CancellationToken cancellationToken)
-        {
-            return Task.FromResult(request.CreateResponsePagination(content, Unit, MaxCount));
-        }
+        protected override Task<HttpResponseMessage> BuildResponseMessageAsync<T>(HttpRequestMessage request, IQueryable<T> content, CancellationToken cancellationToken) =>
+            Task.FromResult(request.CreateResponsePagination(content, Unit, MaxCount));
     }
 }
