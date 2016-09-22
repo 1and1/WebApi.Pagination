@@ -73,8 +73,10 @@ namespace WebApi.Pagination
         /// <param name="from">Returns the index of the first retrieved element (inclusive).</param>
         private static IQueryable<T> Tail<T>(this IQueryable<T> source, long tail, out long from)
         {
-            from = source.LongCount() - tail;
-            return source.Subset(from, from + tail);
+            long count = source.LongCount();
+            from = Math.Max(0, count - tail);
+            long to = Math.Max(from + tail, count);
+            return source.Subset(from, to);
         }
     }
 }

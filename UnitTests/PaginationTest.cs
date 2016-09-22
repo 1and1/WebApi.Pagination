@@ -47,6 +47,18 @@ namespace WebApi.Pagination
         }
 
         [Test]
+        public void TailOverflow()
+        {
+            var source = new List<int> {1, 2}.AsQueryable();
+
+            long firstIndex;
+            var result = source.Paginate(new RangeItemHeaderValue(from: null, to: 4), out firstIndex).ToList();
+
+            result.Should().Equal(1, 2);
+            firstIndex.Should().Be(0);
+        }
+
+        [Test]
         public void Exception()
         {
             var source = new List<int> {1, 2, 3, 4, 5}.AsQueryable();
