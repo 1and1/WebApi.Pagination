@@ -152,7 +152,7 @@ namespace WebApi.Pagination
                 return request.CreateErrorResponse(HttpStatusCode.BadRequest, ex.Message);
             }
 
-            bool openEndedRange = range.From.HasValue && !range.To.HasValue;
+            bool openEndedRange = !(range.From.HasValue && range.To.HasValue);
             var elements = openEndedRange
                 ? await paginatedData.ToListLongPollAsync(maxAttempts, delayMs, cancellationToken)
                 : paginatedData.ToList();
