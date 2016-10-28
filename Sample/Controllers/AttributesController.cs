@@ -41,7 +41,7 @@ namespace PaginationSample.Controllers
         /// Response with pagination and long-polling for open ended ranges.
         /// </summary>
         [HttpGet, Route("long-polling")]
-        [PaginationLongPolling]
+        [Pagination(LongPolling = true)]
         public IQueryable<Person> LongPolling() => Persons;
     }
 }

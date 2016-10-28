@@ -36,6 +36,12 @@ namespace PaginationSample.Controllers
         /// Response with pagination and long-polling for open ended ranges.
         /// </summary>
         [HttpGet, Route("long-polling"), ResponseType(typeof(IEnumerable<Person>))]
-        public Task<HttpResponseMessage> LongPolling() => Request.CreateResponsePaginationLongPollingAsync(Persons);
+        public Task<HttpResponseMessage> LongPolling() => Request.CreateResponsePaginationAsync(Persons, longPolling: true);
+
+        /// <summary>
+        /// Response with pagination and long-polling for open ended ranges.
+        /// </summary>
+        [HttpGet, Route("long-polling-with-end"), ResponseType(typeof(IEnumerable<Person>))]
+        public Task<HttpResponseMessage> LongPollingWithEnd() => Request.CreateResponsePaginationAsync(Persons, longPolling: true, endCondition: x => x.LastName == "Smith");
     }
 }

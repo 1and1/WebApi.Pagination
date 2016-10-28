@@ -24,7 +24,7 @@ public IQueryable<Person> Get()
 
 If you add any other filter attributes to your methods make sure the `[Pagination]` attribute is listed last. Otherwise modifications to the response made by other filters will be lost.
 
-Use `[PaginationLongPolling]` instead of `[Pagination]` to enable long polling.
+Use `[Pagination(LongPolling = true)]` to enable long polling.
 
 
 ### Extension methods
@@ -41,7 +41,7 @@ public HttpResponseMessage Get(HttpRequestMessage request)
 }
 ```
 
-Use `.CreateResponsePaginationLongPollingAsync()` instead of `.CreateResponsePagination()` to enable long polling.
+Use `.CreateResponsePaginationAsync(..., longPolling: true)` to enable long polling.
 
 
 

@@ -65,7 +65,6 @@
     <Compile Include="LongPolling.cs" />
     <Compile Include="PaginationAttribute.cs" />
     <Compile Include="Pagination.cs" />
-    <Compile Include="PaginationLongPollingAttribute.cs" />
     <Compile Include="QueryableResponseFilterAttribute.cs" />
     <None Include="packages.config" />
   </ItemGroup>
