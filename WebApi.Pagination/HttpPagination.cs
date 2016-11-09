@@ -106,7 +106,7 @@ namespace WebApi.Pagination
                 return request.CreateErrorResponse(HttpStatusCode.BadRequest, ex.Message);
             }
 
-            return longPolling && range.From.HasValue && !range.To.HasValue
+            return longPolling && range.IsHalfOpen()
                 ? BuildResponsePaginationLongPolling(request, await paginatedData.ToListLongPollAsync(maxAttempts, delayMs, cancellationToken), firstIndex, unit, endCondition ?? (_ => false))
                 : BuildResponsePagination(request, paginatedData.ToList(), firstIndex, source.LongCount(), unit);
         }
@@ -121,6 +121,11 @@ namespace WebApi.Pagination
             if (count > maxCount)
                 throw new ArgumentException($"The request is attempting to retrieve {count} elements. However, a single request may not retrieve more than {maxCount} elements.");
         }
+
+        /// <summary>
+        /// Determines whether a range represents a half-open interval (e.g. <c>5-</c> or <c>-10</c>).
+        /// </summary>
+        private static bool IsHalfOpen(this RangeItemHeaderValue value) => (value.From.HasValue && !value.To.HasValue) || (!value.From.HasValue && value.To.HasValue);
 
         /// <summary>
         /// Builds a response message for a paginated set of elements.
