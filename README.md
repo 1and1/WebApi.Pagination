@@ -106,29 +106,43 @@ Content-Range: elements 2-5/5
 
 ### Long polling
 
-Request:
+Initial request:
 ```
 GET /resource
-Range: elements=6-
+Range: elements=0-
 ```
 
 Response after timeout with no new content:
 ```
-416 Requested Range
+416 Requested Range not satisfiable
 ```
 
-Client keeps polling...
-
-Request:
+Client keeps polling automatically. Request:
 ```
 GET /resource
-Range: elements=6-
+Range: elements=0-
 ```
 
-Response after delay until content became available:
+Response after delay until new content became available:
 ```
 206 Partial Content
-Content-Range: elements 6-7/*
+Content-Range: elements 0-1/*
 
-[ 6, 7 ]
+[ 0, 1 ]
 ```
+
+Client keeps polling automatically. Request:
+```
+GET /resource
+Range: elements=2-
+```
+
+Response after delay until new content became available:
+```
+206 Partial Content
+Content-Range: elements 2-3/4
+
+[ 2, 3 ]
+```
+
+Client stops polling because content range with specified length (`4` instead of `*`) indicates the end has been reached.
