@@ -20,14 +20,14 @@ namespace WebApi.Pagination
         public const string DefaultUnit = "elements";
 
         /// <summary>
-        /// The default value for how many query attempts are performed for a long poll before giving up.
+        /// The default value for how many database queries are performed for a single long polling request before terminating the connection and requiring the client to reconnect.
         /// </summary>
-        public const int DefaultMaxAttempts = 10;
+        public const int DefaultQueriesPerRequest = 10;
 
         /// <summary>
-        /// The default value for how many milliseconds to wait between query attempts for a long poll.
+        /// The default value for how many milliseconds to wait between database queries for long polling.
         /// </summary>
-        public const int DefaultDelayMs = 1500;
+        public const int DefaultQueryDelayMs = 1500;
 
         /// <summary>
         /// Generates a response message from a queryable data source and applies any pagination requests specified in the request message.
@@ -35,11 +35,8 @@ namespace WebApi.Pagination
         /// <param name="request">The request message to check for pagination requests.</param>
         /// <param name="source">The queryable data source to apply pagination and long polling to and return in response message.</param>
         /// <param name="unit">The value used for <see cref="RangeHeaderValue.Unit"/>.</param>
-        /// <param name="maxAttempts">How many query attempts are performed for a long poll before giving up.</param>
-        /// <param name="delayMs">How many milliseconds to wait between query attempts for a long poll.</param>
         /// <param name="maxCount">The maximum number of elements that clients may retrieve in a single request. <c>0</c> for no limit.</param>
-        /// <param name="endCondition">A check to determine whether an entity is the last element in the stream and no further polling is required. May be <c>null</c>.</param>
-        public static HttpResponseMessage CreateResponsePagination<T>(this HttpRequestMessage request, IQueryable<T> source, string unit = DefaultUnit, int maxAttempts = DefaultMaxAttempts, int delayMs = DefaultDelayMs, long maxCount = 0, Predicate<T> endCondition = null)
+        public static HttpResponseMessage CreateResponsePagination<T>(this HttpRequestMessage request, IQueryable<T> source, string unit = DefaultUnit, long maxCount = 0)
         {
             if (request.Headers.Range == null || request.Headers.Range.Unit != unit)
                 return BuildResponseAdvertised(request, source.ToList(), unit);
@@ -76,11 +73,11 @@ namespace WebApi.Pagination
         /// <param name="longPolling">Controls whether to use long polling for open-ended ranges.</param>
         /// <param name="endCondition">A check to determine whether an entity is the last element in the stream and no further polling is required. Only relevant if <paramref name="longPolling"/> is <c>true</c>.</param>
         /// <param name="unit">The value used for <see cref="RangeHeaderValue.Unit"/>.</param>
-        /// <param name="maxAttempts">How many query attempts are performed for a long poll before giving up.</param>
-        /// <param name="delayMs">How many milliseconds to wait between query attempts for a long poll.</param>
         /// <param name="maxCount">The maximum number of elements that clients may retrieve in a single request. <c>0</c> for no limit.</param>
+        /// <param name="queriesPerRequest">How many database queries are performed for a single long polling request before terminating the connection and requiring the client to reconnect.</param>
+        /// <param name="queryDelay">How many milliseconds to wait between database queries for long polling.</param>
         /// <param name="cancellationToken">Used to cancel the polling.</param>
-        public static async Task<HttpResponseMessage> CreateResponsePaginationAsync<T>(this HttpRequestMessage request, IQueryable<T> source, bool longPolling, Predicate<T> endCondition = null, string unit = DefaultUnit, int maxAttempts = DefaultMaxAttempts, int delayMs = DefaultDelayMs, long maxCount = 0, CancellationToken cancellationToken = default(CancellationToken))
+        public static async Task<HttpResponseMessage> CreateResponsePaginationAsync<T>(this HttpRequestMessage request, IQueryable<T> source, bool longPolling, Predicate<T> endCondition = null, string unit = DefaultUnit, long maxCount = 0, int queriesPerRequest = DefaultQueriesPerRequest, int queryDelay = DefaultQueryDelayMs, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (request.Headers.Range == null || request.Headers.Range.Unit != unit)
                 return BuildResponseAdvertised(request, source.ToList(), unit);
@@ -107,7 +104,7 @@ namespace WebApi.Pagination
             }
 
             return longPolling && range.IsHalfOpen()
-                ? BuildResponsePaginationLongPolling(request, await paginatedData.ToListLongPollAsync(maxAttempts, delayMs, cancellationToken), firstIndex, unit, endCondition ?? (_ => false))
+                ? BuildResponsePaginationLongPolling(request, await paginatedData.ToListLongPollAsync(queriesPerRequest, queryDelay, cancellationToken), firstIndex, unit, endCondition ?? (_ => false))
                 : BuildResponsePagination(request, paginatedData.ToList(), firstIndex, source.LongCount(), unit);
         }
 
