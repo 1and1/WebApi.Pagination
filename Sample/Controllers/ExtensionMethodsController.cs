@@ -33,6 +33,12 @@ namespace PaginationSample.Controllers
         public HttpResponseMessage Pagination() => Request.CreateResponsePagination(Persons);
 
         /// <summary>
+        /// Response with pagination with a limited result set size.
+        /// </summary>
+        [HttpGet, Route("pagination-limited")]
+        public HttpResponseMessage PaginationLimited() => Request.CreateResponsePagination(Persons, maxCount: 1);
+
+        /// <summary>
         /// Response with pagination and long-polling for open ended ranges.
         /// </summary>
         [HttpGet, Route("long-polling"), ResponseType(typeof(IEnumerable<Person>))]

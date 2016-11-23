@@ -22,7 +22,7 @@ namespace WebApi.Pagination
         public string Unit { get; set; } = HttpPagination.DefaultUnit;
 
         /// <summary>
-        /// The maximum number of elements that clients may retrieve in a single request. <c>0</c> for no limit.
+        /// The maximum number of elements that clients may retrieve in a single request. <c>0</c> for no limit. Setting this forces consumers to use pagination.
         /// </summary>
         public long MaxCount { get; set; }
 

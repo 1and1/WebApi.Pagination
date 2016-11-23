@@ -35,21 +35,21 @@ namespace WebApi.Pagination
         /// <param name="request">The request message to check for pagination requests.</param>
         /// <param name="source">The queryable data source to apply pagination and long polling to and return in response message.</param>
         /// <param name="unit">The value used for <see cref="RangeHeaderValue.Unit"/>.</param>
-        /// <param name="maxCount">The maximum number of elements that clients may retrieve in a single request. <c>0</c> for no limit.</param>
+        /// <param name="maxCount">The maximum number of elements that clients may retrieve in a single request. <c>0</c> for no limit. Setting this forces consumers to use pagination.</param>
         public static HttpResponseMessage CreateResponsePagination<T>(this HttpRequestMessage request, IQueryable<T> source, string unit = DefaultUnit, long maxCount = 0)
         {
-            if (request.Headers.Range == null || request.Headers.Range.Unit != unit)
-                return BuildResponseAdvertised(request, source.ToList(), unit);
-            var range = request.Headers.Range.Ranges.First();
-
+            RangeItemHeaderValue range;
             try
             {
-                CheckRequestedRange(range, maxCount);
+                range = GetRange(request, unit, maxCount);
             }
-            catch (ArgumentException ex)
+            catch (InvalidOperationException ex)
             {
-                return request.CreateErrorResponse(HttpStatusCode.RequestEntityTooLarge, ex.Message);
+                return request.CreateErrorResponse(HttpStatusCode.RequestEntityTooLarge, ex.Message).Advertise(unit);
             }
+
+            if (range == null)
+                return request.CreateResponse(HttpStatusCode.OK, source.ToList()).Advertise(unit);
 
             IQueryable<T> paginatedData;
             long firstIndex;
@@ -59,10 +59,10 @@ namespace WebApi.Pagination
             }
             catch (ArgumentException ex)
             {
-                return request.CreateErrorResponse(HttpStatusCode.BadRequest, ex.Message);
+                return request.CreateErrorResponse(HttpStatusCode.BadRequest, ex.Message).Advertise(unit);
             }
 
-            return BuildResponsePagination(request, paginatedData.ToList(), firstIndex, source.LongCount(), unit);
+            return request.CreateResponsePagination(paginatedData.ToList(), firstIndex, source.LongCount(), unit).Advertise(unit);
         }
 
         /// <summary>
@@ -73,24 +73,24 @@ namespace WebApi.Pagination
         /// <param name="longPolling">Controls whether to use long polling for open-ended ranges.</param>
         /// <param name="endCondition">A check to determine whether an entity is the last element in the stream and no further polling is required. Only relevant if <paramref name="longPolling"/> is <c>true</c>.</param>
         /// <param name="unit">The value used for <see cref="RangeHeaderValue.Unit"/>.</param>
-        /// <param name="maxCount">The maximum number of elements that clients may retrieve in a single request. <c>0</c> for no limit.</param>
+        /// <param name="maxCount">The maximum number of elements that clients may retrieve in a single request. <c>0</c> for no limit. Setting this forces consumers to use pagination.</param>
         /// <param name="queriesPerRequest">How many database queries are performed for a single long polling request before terminating the connection and requiring the client to reconnect.</param>
         /// <param name="queryDelay">How many milliseconds to wait between database queries for long polling.</param>
         /// <param name="cancellationToken">Used to cancel the polling.</param>
         public static async Task<HttpResponseMessage> CreateResponsePaginationAsync<T>(this HttpRequestMessage request, IQueryable<T> source, bool longPolling, Predicate<T> endCondition = null, string unit = DefaultUnit, long maxCount = 0, int queriesPerRequest = DefaultQueriesPerRequest, int queryDelay = DefaultQueryDelayMs, CancellationToken cancellationToken = default(CancellationToken))
         {
-            if (request.Headers.Range == null || request.Headers.Range.Unit != unit)
-                return BuildResponseAdvertised(request, source.ToList(), unit);
-            var range = request.Headers.Range.Ranges.First();
-
+            RangeItemHeaderValue range;
             try
             {
-                CheckRequestedRange(range, maxCount);
+                range = GetRange(request, unit, maxCount);
             }
-            catch (ArgumentException ex)
+            catch (InvalidOperationException ex)
             {
-                return request.CreateErrorResponse(HttpStatusCode.RequestEntityTooLarge, ex.Message);
+                return request.CreateErrorResponse(HttpStatusCode.RequestEntityTooLarge, ex.Message).Advertise(unit);
             }
+
+            if (range == null)
+                return request.CreateResponse(HttpStatusCode.OK, source.ToList()).Advertise(unit);
 
             IQueryable<T> paginatedData;
             long firstIndex;
@@ -100,23 +100,42 @@ namespace WebApi.Pagination
             }
             catch (ArgumentException ex)
             {
-                return request.CreateErrorResponse(HttpStatusCode.BadRequest, ex.Message);
+                return request.CreateErrorResponse(HttpStatusCode.BadRequest, ex.Message).Advertise(unit);
             }
 
-            return longPolling && range.IsHalfOpen()
-                ? BuildResponsePaginationLongPolling(request, await paginatedData.ToListLongPollAsync(queriesPerRequest, queryDelay, cancellationToken), firstIndex, unit, endCondition ?? (_ => false))
-                : BuildResponsePagination(request, paginatedData.ToList(), firstIndex, source.LongCount(), unit);
+            return (longPolling && range.IsHalfOpen()
+                ? request.CreateResponsePaginationLongPolling(await paginatedData.ToListLongPollAsync(queriesPerRequest, queryDelay, cancellationToken), firstIndex, unit, endCondition ?? (_ => false))
+                : request.CreateResponsePagination(paginatedData.ToList(), firstIndex, source.LongCount(), unit)).Advertise(unit);
         }
 
-        private static void CheckRequestedRange(RangeItemHeaderValue range, long maxCount)
+        /// <summary>
+        /// Determines the range of elements requested.
+        /// </summary>
+        /// <param name="request">The request message to check for pagination requests.</param>
+        /// <param name="unit">The value used for <see cref="RangeHeaderValue.Unit"/>.</param>
+        /// <param name="maxCount">The maximum number of elements that clients may retrieve in a single request. <c>0</c> for no limit.</param>
+        /// <returns>The requested range or <c>null</c> if all elements should be retrieved.</returns>
+        /// <exception cref="InvalidOperationException">The request range violates the specified <paramref name="maxCount"/>.</exception>
+        private static RangeItemHeaderValue GetRange(HttpRequestMessage request, string unit, long maxCount)
         {
-            if (maxCount == 0) return;
-            if (!range.To.HasValue)
-                throw new ArgumentException($"The request is attempting to retrieve an open-ended set of elements. However, a single request may not retrieve more than {maxCount} elements.");
+            var range = (request.Headers.Range == null || request.Headers.Range.Unit != unit)
+                ? null
+                : request.Headers.Range.Ranges.FirstOrDefault();
 
-            long count = (range.To - range.From + 1) ?? range.To.Value;
-            if (count > maxCount)
-                throw new ArgumentException($"The request is attempting to retrieve {count} elements. However, a single request may not retrieve more than {maxCount} elements.");
+            if (maxCount != 0)
+            {
+                if (range == null)
+                    throw new InvalidOperationException($"The request is attempting to retrieve all elements. However, a single request may not retrieve more than {maxCount} elements.");
+
+                if (!range.To.HasValue)
+                    throw new InvalidOperationException($"The request is attempting to retrieve an open-ended set of elements. However, a single request may not retrieve more than {maxCount} elements.");
+
+                long count = (range.To - range.From + 1) ?? range.To.Value;
+                if (count > maxCount)
+                    throw new InvalidOperationException($"The request is attempting to retrieve {count} elements. However, a single request may not retrieve more than {maxCount} elements.");
+            }
+
+            return range;
         }
 
         /// <summary>
@@ -125,14 +144,14 @@ namespace WebApi.Pagination
         private static bool IsHalfOpen(this RangeItemHeaderValue value) => (value.From.HasValue && !value.To.HasValue) || (!value.From.HasValue && value.To.HasValue);
 
         /// <summary>
-        /// Builds a response message for a paginated set of elements.
+        /// Creates a response message for a paginated set of elements.
         /// </summary>
         /// <param name="request">The request message to generate the response for.</param>
         /// <param name="elements">The elements to return in response message.</param>
         /// <param name="firstIndex">The index of the first element in <paramref name="elements"/>.</param>
         /// <param name="totalLength">The total length of the original data source that was paginated.</param>
         /// <param name="unit">The value used for <see cref="RangeHeaderValue.Unit"/>.</param>
-        private static HttpResponseMessage BuildResponsePagination<T>(HttpRequestMessage request, IReadOnlyCollection<T> elements, long firstIndex, long totalLength, string unit)
+        private static HttpResponseMessage CreateResponsePagination<T>(this HttpRequestMessage request, IReadOnlyCollection<T> elements, long firstIndex, long totalLength, string unit)
         {
             if (elements.Count == 0)
             {
@@ -148,14 +167,14 @@ namespace WebApi.Pagination
         }
 
         /// <summary>
-        /// Builds a response message for a paginated and long polled set of elements.
+        /// Creates a response message for a paginated and long polled set of elements.
         /// </summary>
         /// <param name="request">The request message to generate the response for.</param>
         /// <param name="elements">The elements to return in response message.</param>
         /// <param name="firstIndex">The index of the first element in <paramref name="elements"/>.</param>
         /// <param name="unit">The value used for <see cref="RangeHeaderValue.Unit"/>.</param>
         /// <param name="endCondition">A check to determine whether an entity is the last element in the stream and no further polling is required. May be <c>null</c>.</param>
-        private static HttpResponseMessage BuildResponsePaginationLongPolling<T>(HttpRequestMessage request, IReadOnlyCollection<T> elements, long firstIndex, string unit, Predicate<T> endCondition)
+        private static HttpResponseMessage CreateResponsePaginationLongPolling<T>(this HttpRequestMessage request, IReadOnlyCollection<T> elements, long firstIndex, string unit, Predicate<T> endCondition)
         {
             if (elements.Count == 0)
             {
@@ -164,7 +183,6 @@ namespace WebApi.Pagination
             }
 
             var response = request.CreateResponse(HttpStatusCode.PartialContent, elements);
-            response.Headers.AcceptRanges.Add(unit);
             response.Content.Headers.ContentRange = endCondition(elements.Last())
                 ? new ContentRangeHeaderValue(from: firstIndex, to: firstIndex + elements.Count - 1, length: firstIndex + elements.Count)
                 : new ContentRangeHeaderValue(from: firstIndex, to: firstIndex + elements.Count - 1);
@@ -173,14 +191,10 @@ namespace WebApi.Pagination
         }
 
         /// <summary>
-        /// Builds a response message for a non-paginated request that advertises the pagination feature to clients.
+        /// Adds a header that advertises the pagination feature to clients.
         /// </summary>
-        /// <param name="request">The request message to generate the response for.</param>
-        /// <param name="elements">The elements to return in response message.</param>
-        /// <param name="unit">The value used for <see cref="RangeHeaderValue.Unit"/>.</param>
-        private static HttpResponseMessage BuildResponseAdvertised<T>(HttpRequestMessage request, IReadOnlyCollection<T> elements, string unit)
+        private static HttpResponseMessage Advertise(this HttpResponseMessage response, string unit)
         {
-            var response = request.CreateResponse(HttpStatusCode.OK, elements);
             response.Headers.AcceptRanges.Add(unit);
             return response;
         }
