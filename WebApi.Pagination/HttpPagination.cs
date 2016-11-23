@@ -38,6 +38,9 @@ namespace WebApi.Pagination
         /// <param name="maxCount">The maximum number of elements that clients may retrieve in a single request. <c>0</c> for no limit. Setting this forces consumers to use pagination.</param>
         public static HttpResponseMessage CreateResponsePagination<T>(this HttpRequestMessage request, IQueryable<T> source, string unit = DefaultUnit, long maxCount = 0)
         {
+            if (request.GetOriginalMethod() == HttpMethod.Head)
+                return request.CreateResponse(HttpStatusCode.OK).Advertise(unit);
+
             RangeItemHeaderValue range;
             try
             {
@@ -79,6 +82,9 @@ namespace WebApi.Pagination
         /// <param name="cancellationToken">Used to cancel the polling.</param>
         public static async Task<HttpResponseMessage> CreateResponsePaginationAsync<T>(this HttpRequestMessage request, IQueryable<T> source, bool longPolling, Predicate<T> endCondition = null, string unit = DefaultUnit, long maxCount = 0, int queriesPerRequest = DefaultQueriesPerRequest, int queryDelay = DefaultQueryDelayMs, CancellationToken cancellationToken = default(CancellationToken))
         {
+            if (request.GetOriginalMethod() == HttpMethod.Head)
+                return request.CreateResponse(HttpStatusCode.OK).Advertise(unit);
+
             RangeItemHeaderValue range;
             try
             {
@@ -106,6 +112,16 @@ namespace WebApi.Pagination
             return (longPolling && range.IsHalfOpen()
                 ? request.CreateResponsePaginationLongPolling(await paginatedData.ToListLongPollAsync(queriesPerRequest, queryDelay, cancellationToken), firstIndex, unit, endCondition ?? (_ => false))
                 : request.CreateResponsePagination(paginatedData.ToList(), firstIndex, source.LongCount(), unit)).Advertise(unit);
+        }
+
+        /// <summary>
+        /// Determines the orginal <see cref="HttpMethod"/> used in the <paramref name="request"/>. This looks past possible replacements performed by other middleware.
+        /// </summary>
+        private static HttpMethod GetOriginalMethod(this HttpRequestMessage request)
+        {
+            object originalMethod;
+            request.Properties.TryGetValue("OriginalMethod", out originalMethod);
+            return originalMethod as HttpMethod ?? request.Method;
         }
 
         /// <summary>
